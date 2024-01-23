@@ -160,11 +160,13 @@ def main(_):
       "text-bison",
       "gpt-3.5-turbo",
       "gpt-4",
+      "llama-2-7b-chat",
   }
   assert optimizer_llm_name in {
       "text-bison",
       "gpt-3.5-turbo",
       "gpt-4",
+      "llama-2-7b-chat",
   }
   assert meta_prompt_type in {
       "both_instructions_and_exemplars",
@@ -191,6 +193,8 @@ def main(_):
   if scorer_llm_name in {"gpt-3.5-turbo", "gpt-4"}:
     assert openai_api_key, "The OpenAI API key must be provided."
     openai.api_key = openai_api_key
+  elif scorer_llm_name == "llama-2-7b-chat":
+    pass
   else:
     assert scorer_llm_name == "text-bison"
     assert (
@@ -201,6 +205,8 @@ def main(_):
   if optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}:
     assert openai_api_key, "The OpenAI API key must be provided."
     openai.api_key = openai_api_key
+  elif optimizer_llm_name == "llama-2-7b-chat":
+    pass
   else:
     assert optimizer_llm_name == "text-bison"
     assert (
@@ -273,7 +279,9 @@ def main(_):
     }
     scorer_llm_dict.update(scorer_finetuned_palm_dict)
     call_scorer_server_func = call_scorer_finetuned_palm_server_func
-
+  elif scorer_llm_name.lower() == "llama-2-7b-chat":
+    # TODO:
+    pass
   else:
     assert scorer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}
     scorer_gpt_max_decode_steps = 1024
@@ -334,7 +342,9 @@ def main(_):
     }
     optimizer_llm_dict.update(optimizer_finetuned_palm_dict)
     call_optimizer_server_func = call_optimizer_finetuned_palm_server_func
-
+  elif optimizer_llm_name == "llama-2-7b-chat":
+    # TODO:
+    pass
   else:
     assert optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     optimizer_gpt_max_decode_steps = 512
@@ -682,6 +692,9 @@ def main(_):
   if scorer_llm_name == "text-bison":
     old_instruction_score_threshold = 0.0
     # old_instruction_score_threshold = 0.15  # for GSM8K
+  elif scorer_llm_name == "llama-2-7b-chat":
+    # TODO:
+    pass
   else:
     assert scorer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     old_instruction_score_threshold = 0.3
@@ -690,6 +703,9 @@ def main(_):
     extract_final_answer_by_prompting_again = False
     include_qa = False
     evaluate_in_parallel = False
+  elif scorer_llm_name == "llama-2-7b-chat":
+    # TODO:
+    pass
   else:
     assert scorer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     extract_final_answer_by_prompting_again = False

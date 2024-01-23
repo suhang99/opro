@@ -77,6 +77,7 @@ def main(_):
       "text-bison",
       "gpt-3.5-turbo",
       "gpt-4",
+      "llama-2-7b-chat",
   }
   openai_api_key = _OPENAI_API_KEY.value
   palm_api_key = _PALM_API_KEY.value
@@ -84,6 +85,8 @@ def main(_):
   if optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}:
     assert openai_api_key, "The OpenAI API key must be provided."
     openai.api_key = openai_api_key
+  elif optimizer_llm_name == "llama-2-7b-chat":
+    pass
   else:
     assert optimizer_llm_name == "text-bison"
     assert (
@@ -140,7 +143,9 @@ def main(_):
     }
     optimizer_llm_dict.update(optimizer_finetuned_palm_dict)
     call_optimizer_server_func = call_optimizer_finetuned_palm_server_func
-
+  elif optimizer_llm_name.lower() == "llama-2-7b-chat":
+    # TODO:
+    pass
   else:
     assert optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     optimizer_gpt_max_decode_steps = 1024

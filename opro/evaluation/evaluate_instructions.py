@@ -28,7 +28,8 @@ python evaluate_instructions.py \
     --scorer="text-bison" --dataset="gsm8k" \
     --task="test" --instruction_pos="Q_begin" \
     --evaluate_training_fold=false --evaluate_test_fold=true \
-    --openai_api_key="<your_key>" --palm_api_key="<your_key>"
+    --openai_api_key="<your_key>" --palm_api_key="<your_key>" \
+    --llama_ckpt_dir="<ckpt_dir>" --llama_tokenizer_path="<tokenizer_path>"
 ```
 
 The outputs will then be written to `outputs/scorer-outputs/` in the opro folder.
@@ -36,6 +37,7 @@ The outputs will then be written to `outputs/scorer-outputs/` in the opro folder
 Notes to Step 4: 
 - When using a Google-Cloud-served model as scorer (like text-bison at https://developers.generativeai.google/tutorials/text_quickstart), add `--palm_api_key="<your_key>"`
 - When using an OpenAI model as scorer, add `--openai_api_key="<your_key>"`
+- When using Llama as scorer, add `--llama_ckpt_dir="<ckpt_dir>" --llama_tokenizer_path="<tokenizer_path>"`
 """
 
 import datetime
@@ -57,6 +59,7 @@ import openai
 from opro import prompt_utils
 from opro.evaluation import eval_utils
 import pandas as pd
+from llama import Llama, Dialog
 
 ROOT_DATA_FOLDER_PATH = os.path.join(OPRO_ROOT_PATH, "data")
 
@@ -66,8 +69,12 @@ _OPENAI_API_KEY = flags.DEFINE_string(
 
 _PALM_API_KEY = flags.DEFINE_string("palm_api_key", "", "The PaLM API key.")
 
+_LLAMA_CKPT_DIR = flags.DEFINE_string("llama_ckpt_dir", "", "Dir of llama checkpoint")
+
+_LLAMA_TOKENIZER_PATH = flags.DEFINE_string("llama_tokenizer_path", "", "Path of Llama tokenizer")
+
 _SCORER = flags.DEFINE_string(
-    "scorer", "text-bison", "The name of the scorer LLM."
+    "scorer", "llama-2-7b-chat", "The name of the scorer LLM."
 )
 
 _DATASET = flags.DEFINE_string(
@@ -117,6 +124,8 @@ def main(_):
 
   openai_api_key = _OPENAI_API_KEY.value
   palm_api_key = _PALM_API_KEY.value
+  llama_ckpt_dir = _LLAMA_CKPT_DIR.value
+  llama_tokenizer_path = _LLAMA_TOKENIZER_PATH.value
   scorer_llm_name = _SCORER.value.lower()
   dataset_name = _DATASET.value.lower()
   task_name = _TASK.value.lower()
@@ -179,12 +188,17 @@ def main(_):
       "text-bison",
       "gpt-3.5-turbo",
       "gpt-4",
+      "llama-2-7b-chat",
   }
 
   # make sure the model is callable
   if scorer_llm_name in {"gpt-3.5-turbo", "gpt-4"}:
     assert openai_api_key, "The OpenAI API key must be provided."
     openai.api_key = openai_api_key
+  elif scorer_llm_name == "llama-2-7b-chat":
+    assert llama_ckpt_dir, "The directory of Llama checkpoint must be provided."
+    assert llama_tokenizer_path, "The path of Llama tokenizer must be provided."
+    llama_model = prompt_utils.LlamaModel(ckpt_dir=llama_ckpt_dir, tokenizer_path=llama_tokenizer_path)
   else:
     assert scorer_llm_name == "text-bison"
     assert (
@@ -268,7 +282,21 @@ def main(_):
     }
     scorer_llm_dict.update(scorer_finetuned_palm_dict)
     call_scorer_server_func = call_scorer_finetuned_palm_server_func
+  elif scorer_llm_name == "llama-2-7b-chat":
+    # TODO:
+    scorer_llama_dict = dict()
+    scorer_llama_dict["max_decode_steps"] = 1024
+    scorer_llama_dict['temperature'] = 0.0
+    scorer_llama_dict["batch_size"] = 1
+    scorer_llama_dict["num_servers"] = 1
+    llama_model.create_model(temperature=scorer_llama_dict["temperature"], max_decode_steps=scorer_llama_dict["max_decode_steps"])
 
+    scorer_llm_dict = {
+      "model_type": scorer_llm_name.lower(),
+    }
+    scorer_llm_dict.update(scorer_llama_dict)
+
+    call_scorer_server_func = llama_model.call_llama
   else:
     # GPT models
     assert scorer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}
@@ -526,6 +554,12 @@ def main(_):
 
   if scorer_llm_name == "text-bison":
     # instruction fine-tuned models
+    batch_size = 1
+    num_servers = scorer_llm_dict["num_servers"]
+    extract_final_answer_by_prompting_again = False
+    include_qa = False
+    evaluate_in_parallel = False
+  elif scorer_llm_name == "llama-2-7b-chat":
     batch_size = 1
     num_servers = scorer_llm_dict["num_servers"]
     extract_final_answer_by_prompting_again = False

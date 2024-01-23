@@ -14,8 +14,11 @@
 """The utility functions for prompting GPT and Google Cloud models."""
 
 import time
+from llama import Llama, Dialog
+from typing import List, Optional
 import google.generativeai as palm
 import openai
+import os
 
 
 def call_openai_server_single_prompt(
@@ -130,3 +133,29 @@ def call_palm_server_from_cloud(
     return call_palm_server_from_cloud(
         input_text, max_decode_steps=max_decode_steps, temperature=temperature
     )
+
+
+class LlamaModel:
+  def __init__(self, model="llama-2-7b-chat", ckpt_dir="", tokenizer_path="", max_seq_len=512, max_batch_size=8) -> None:
+    """Initializing the llama model"""
+    assert model == "llama-2-7b-chat"
+    assert os.path.exists(ckpt_dir)
+    assert os.path.exists(tokenizer_path)
+    self.ckpt_dir = ckpt_dir
+    self.tokenizer_path = tokenizer_path
+    self.max_seq_len = max_seq_len
+    self.max_batch_size = max_batch_size
+
+  def create_model(self, temperature=0.6, max_decode_steps=20):
+    self.temperature = temperature
+    self.max_decode_steps = max_decode_steps
+    self.generator = Llama.build(ckpt_dir=self.ckpt_dir, tokenizer_path=self.tokenizer_path, max_seq_len=self.max_seq_len, max_batch_size=self.max_batch_size)
+
+  def call_llama(self, input_text):
+    """Calling the llama model"""
+    assert isinstance(input_text, str)
+
+    dialogs: List[Dialog] = [[{"role":"user", "content": input_text}]]
+    results = self.generator.chat_completion(dialogs, temperature=self.temperature, top_p=0.9)
+    assert len(results) == 1
+    return results[0]['generation']['content']

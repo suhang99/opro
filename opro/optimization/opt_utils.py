@@ -173,6 +173,9 @@ def gen_meta_prompt(
             " Below are some previous instructions with their scores."
             " The score ranges from 0 to 100.\n"
         )
+    elif optimizer_llm_name.lower() == "llama-2-7b-chat":
+      # TODO:
+      pass
     else:
       assert optimizer_llm_name.lower() == "text-bison"
       meta_prompt_old_instruction_part = (
@@ -194,6 +197,9 @@ def gen_meta_prompt(
     if few_shot_qa_pairs:
       if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
         meta_prompt_exemplar_part += "Below are some problems.\n"
+      elif optimizer_llm_name.lower() == "llama-2-7b-chat":
+        # TODO:
+        pass
       else:
         assert optimizer_llm_name.lower() == "text-bison"
         meta_prompt_exemplar_part += (
@@ -227,6 +233,9 @@ def gen_meta_prompt(
           else:  # instruction_pos == "A_begin"
             if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
               meta_prompt_exemplar_part += f"\nQ: {question}\nA: <Start>"
+            elif optimizer_llm_name.lower() == "llama-2-7b-chat":
+              # TODO:
+              pass
             else:
               assert optimizer_llm_name.lower() == "text-bison"
               meta_prompt_exemplar_part += f"\ninput:\nQ: {question}\nA: <INS>"
@@ -237,6 +246,9 @@ def gen_meta_prompt(
               meta_prompt_exemplar_part += f"\nProblem:\n<INS>\n{question}\n"
             elif instruction_pos == "Q_end":
               meta_prompt_exemplar_part += f"\nProblem:\n{question}\n<INS>\n"
+          elif optimizer_llm_name.lower() == "llama-2-7b-chat":
+              # TODO:
+              pass
           else:
             assert optimizer_llm_name.lower() == "text-bison"
             if instruction_pos == "Q_begin":
@@ -248,6 +260,9 @@ def gen_meta_prompt(
           meta_prompt_exemplar_part += (
               f"\nGround truth answer:\n{true_answer}\n"
           )
+        elif optimizer_llm_name.lower() == "llama-2-7b-chat":
+          # TODO:
+          pass
         else:
           assert optimizer_llm_name.lower() == "text-bison"
           meta_prompt_exemplar_part += f"\noutput:\n{true_answer}\n"
@@ -287,6 +302,9 @@ def gen_meta_prompt(
             " The instruction should be concise, effective,"
             " and generally applicable to all problems above."
         )
+    elif optimizer_llm_name.lower() == "llama-2-7b-chat":
+        # TODO:
+        pass
     else:
       assert optimizer_llm_name.lower() == "text-bison"
       meta_prompt += (
@@ -760,6 +778,9 @@ def run_evolution(**kwargs):
               end_index = raw_output.index(end_string)
             new_inst = raw_output[start_index:end_index].strip()
             generated_instructions_raw.append(new_inst)
+        elif optimizer_llm_name.lower() == "llama-2-7b-chat":
+          # TODO:
+          pass
         else:
           assert optimizer_llm_name.lower() == "text-bison"
           generated_instructions_raw += [
