@@ -174,8 +174,20 @@ def gen_meta_prompt(
             " The score ranges from 0 to 100.\n"
         )
     elif optimizer_llm_name.lower() == "llama-2-7b-chat":
-      # TODO:
-      pass
+      if instruction_pos == "A_begin":
+        # TODO: meta prompt
+        meta_prompt_old_instruction_part = (
+          ""
+          ""
+          ""
+        )
+      else:
+        # TODO: meta prompt
+        meta_prompt_old_instruction_part = (
+          ""
+          ""
+          ""
+        )
     else:
       assert optimizer_llm_name.lower() == "text-bison"
       meta_prompt_old_instruction_part = (
@@ -198,8 +210,8 @@ def gen_meta_prompt(
       if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
         meta_prompt_exemplar_part += "Below are some problems.\n"
       elif optimizer_llm_name.lower() == "llama-2-7b-chat":
-        # TODO:
-        pass
+        # TODO: meta prompt
+        meta_prompt_exemplar_part += ""
       else:
         assert optimizer_llm_name.lower() == "text-bison"
         meta_prompt_exemplar_part += (
@@ -234,8 +246,8 @@ def gen_meta_prompt(
             if optimizer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}:
               meta_prompt_exemplar_part += f"\nQ: {question}\nA: <Start>"
             elif optimizer_llm_name.lower() == "llama-2-7b-chat":
-              # TODO:
-              pass
+              # TODO: meta prompt
+              meta_prompt_exemplar_part += f""
             else:
               assert optimizer_llm_name.lower() == "text-bison"
               meta_prompt_exemplar_part += f"\ninput:\nQ: {question}\nA: <INS>"
@@ -247,8 +259,8 @@ def gen_meta_prompt(
             elif instruction_pos == "Q_end":
               meta_prompt_exemplar_part += f"\nProblem:\n{question}\n<INS>\n"
           elif optimizer_llm_name.lower() == "llama-2-7b-chat":
-              # TODO:
-              pass
+              # TODO: meta prompt
+              meta_prompt_exemplar_part += f""
           else:
             assert optimizer_llm_name.lower() == "text-bison"
             if instruction_pos == "Q_begin":
@@ -261,8 +273,10 @@ def gen_meta_prompt(
               f"\nGround truth answer:\n{true_answer}\n"
           )
         elif optimizer_llm_name.lower() == "llama-2-7b-chat":
-          # TODO:
-          pass
+          # TODO: meta prompt
+          meta_prompt_exemplar_part += (
+            f""
+          )
         else:
           assert optimizer_llm_name.lower() == "text-bison"
           meta_prompt_exemplar_part += f"\noutput:\n{true_answer}\n"
@@ -304,7 +318,9 @@ def gen_meta_prompt(
         )
     elif optimizer_llm_name.lower() == "llama-2-7b-chat":
         # TODO:
-        pass
+        meta_prompt += (
+          ""
+        )
     else:
       assert optimizer_llm_name.lower() == "text-bison"
       meta_prompt += (

@@ -162,7 +162,7 @@ def main(_):
       "model_type": optimizer_llm_name,
     }
     optimizer_llm_dict.update(optimizer_llama_dict)
-    call_scorer_server_func = llama_model.call_llama
+    call_optimizer_server_func = llama_model.call_llama
   else:
     assert optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     optimizer_gpt_max_decode_steps = 1024

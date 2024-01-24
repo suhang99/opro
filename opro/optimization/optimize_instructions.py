@@ -59,6 +59,7 @@ import openai
 from opro import prompt_utils
 from opro.optimization import opt_utils
 import pandas as pd
+from llama import Llama, Dialog
 
 ROOT_DATA_FOLDER_PATH = os.path.join(OPRO_ROOT_PATH, "data")
 
@@ -68,12 +69,16 @@ _OPENAI_API_KEY = flags.DEFINE_string(
 
 _PALM_API_KEY = flags.DEFINE_string("palm_api_key", "", "The PaLM API key.")
 
+_LLAMA_CKPT_DIR = flags.DEFINE_string("llama_ckpt_dir", "", "The directory of llama checkpoint")
+
+_LLAMA_TOKENIZER_PATH = flags.DEFINE_string("llama_tokenizer_path", "", "The path of Llama tokenizer")
+
 _SCORER = flags.DEFINE_string(
-    "scorer", "text-bison", "The name of the scorer LLM."
+    "scorer", "llama-2-7b-chat", "The name of the scorer LLM."
 )
 
 _OPTIMIZER = flags.DEFINE_string(
-    "optimizer", "gpt-3.5-turbo", "The name of the optimizer LLM."
+    "optimizer", "llama-2-7b-chat", "The name of the optimizer LLM."
 )
 
 _DATASET = flags.DEFINE_string(
@@ -104,6 +109,8 @@ _META_PROMPT_TYPE = flags.DEFINE_string(
 def main(_):
   openai_api_key = _OPENAI_API_KEY.value
   palm_api_key = _PALM_API_KEY.value
+  llama_ckpt_dir = _LLAMA_CKPT_DIR.value
+  llama_tokenizer_path = _LLAMA_TOKENIZER_PATH.value
   scorer_llm_name = _SCORER.value
   optimizer_llm_name = _OPTIMIZER.value
   dataset_name = _DATASET.value.lower()
@@ -194,7 +201,9 @@ def main(_):
     assert openai_api_key, "The OpenAI API key must be provided."
     openai.api_key = openai_api_key
   elif scorer_llm_name == "llama-2-7b-chat":
-    pass
+    assert llama_ckpt_dir, "The directory of Llama checkpoint must be provided."
+    assert llama_tokenizer_path, "The path of Llama tokenizer must be provided."
+    scorer_llama_model = prompt_utils.LlamaModel(ckpt_dir=llama_ckpt_dir, tokenizer_path=llama_tokenizer_path)
   else:
     assert scorer_llm_name == "text-bison"
     assert (
@@ -206,7 +215,9 @@ def main(_):
     assert openai_api_key, "The OpenAI API key must be provided."
     openai.api_key = openai_api_key
   elif optimizer_llm_name == "llama-2-7b-chat":
-    pass
+    assert llama_ckpt_dir, "The directory of Llama checkpoint must be provided."
+    assert llama_tokenizer_path, "The path of Llama tokenizer must be provided."
+    optimizer_llama_model = prompt_utils.LlamaModel(ckpt_dir=llama_ckpt_dir, tokenizer_path=llama_tokenizer_path)    
   else:
     assert optimizer_llm_name == "text-bison"
     assert (
@@ -280,8 +291,19 @@ def main(_):
     scorer_llm_dict.update(scorer_finetuned_palm_dict)
     call_scorer_server_func = call_scorer_finetuned_palm_server_func
   elif scorer_llm_name.lower() == "llama-2-7b-chat":
-    # TODO:
-    pass
+    scorer_llama_dict = dict()
+    scorer_llama_dict["max_decode_steps"] = 1024
+    scorer_llama_dict['temperature'] = 0.0
+    scorer_llama_dict["batch_size"] = 1
+    scorer_llama_dict["num_servers"] = 1
+    scorer_llama_model.create_model(temperature=scorer_llama_dict["temperature"], max_decode_steps=scorer_llama_dict["max_decode_steps"])
+
+    scorer_llm_dict = {
+      "model_type": scorer_llm_name.lower(),
+    }
+    scorer_llm_dict.update(scorer_llama_dict)
+
+    call_scorer_server_func = scorer_llama_model.call_llama
   else:
     assert scorer_llm_name.lower() in {"gpt-3.5-turbo", "gpt-4"}
     scorer_gpt_max_decode_steps = 1024
@@ -343,8 +365,18 @@ def main(_):
     optimizer_llm_dict.update(optimizer_finetuned_palm_dict)
     call_optimizer_server_func = call_optimizer_finetuned_palm_server_func
   elif optimizer_llm_name == "llama-2-7b-chat":
-    # TODO:
-    pass
+    optimizer_llama_dict = dict()
+    optimizer_llama_dict["max_decode_steps"] = 1024
+    optimizer_llama_dict['temperature'] = 0.0
+    optimizer_llama_dict["batch_size"] = 1
+    optimizer_llama_dict["num_servers"] = 1
+    optimizer_llama_model.create_model(temperature=optimizer_llama_dict["temperature"], max_decode_steps=optimizer_llama_dict["max_decode_steps"])
+
+    optimizer_llm_dict = {
+      "model_type": optimizer_llm_name.lower(),
+    }
+    optimizer_llm_dict.update(optimizer_llama_dict)
+    call_optimizer_server_func = optimizer_llama_model.call_llama
   else:
     assert optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     optimizer_gpt_max_decode_steps = 512
@@ -693,8 +725,7 @@ def main(_):
     old_instruction_score_threshold = 0.0
     # old_instruction_score_threshold = 0.15  # for GSM8K
   elif scorer_llm_name == "llama-2-7b-chat":
-    # TODO:
-    pass
+    old_instruction_score_threshold = 0.3
   else:
     assert scorer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     old_instruction_score_threshold = 0.3
@@ -704,8 +735,9 @@ def main(_):
     include_qa = False
     evaluate_in_parallel = False
   elif scorer_llm_name == "llama-2-7b-chat":
-    # TODO:
-    pass
+    extract_final_answer_by_prompting_again = False
+    include_qa = False
+    evaluate_in_parallel = False
   else:
     assert scorer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     extract_final_answer_by_prompting_again = False
