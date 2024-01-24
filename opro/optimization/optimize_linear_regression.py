@@ -43,6 +43,7 @@ from absl import flags
 import google.generativeai as palm
 import numpy as np
 import openai
+from llama import Llama, Dialog
 
 from opro import prompt_utils
 
@@ -54,8 +55,12 @@ _OPENAI_API_KEY = flags.DEFINE_string(
 
 _PALM_API_KEY = flags.DEFINE_string("palm_api_key", "", "The PaLM API key.")
 
+_LLAMA_CKPT_DIR = flags.DEFINE_string("llama_ckpt_dir", "", "The directory of llama checkpoint")
+
+_LLAMA_TOKENIZER_PATH = flags.DEFINE_string("llama_tokenizer_path", "", "The path of Llama tokenizer")
+
 _OPTIMIZER = flags.DEFINE_string(
-    "optimizer", "gpt-3.5-turbo", "The name of the optimizer LLM."
+    "optimizer", "llama-2-7b-chat", "The name of the optimizer LLM."
 )
 
 
@@ -81,12 +86,14 @@ def main(_):
   }
   openai_api_key = _OPENAI_API_KEY.value
   palm_api_key = _PALM_API_KEY.value
+  llama_ckpt_dir = _LLAMA_CKPT_DIR.value
+  llama_tokenizer_path = _LLAMA_TOKENIZER_PATH.value
 
   if optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}:
     assert openai_api_key, "The OpenAI API key must be provided."
     openai.api_key = openai_api_key
   elif optimizer_llm_name == "llama-2-7b-chat":
-    pass
+    llama_model = prompt_utils.LlamaModel(ckpt_dir=llama_ckpt_dir, tokenizer_path=llama_tokenizer_path)
   else:
     assert optimizer_llm_name == "text-bison"
     assert (
@@ -144,8 +151,18 @@ def main(_):
     optimizer_llm_dict.update(optimizer_finetuned_palm_dict)
     call_optimizer_server_func = call_optimizer_finetuned_palm_server_func
   elif optimizer_llm_name.lower() == "llama-2-7b-chat":
-    # TODO:
-    pass
+    optimizer_llama_dict = dict()
+    optimizer_llama_dict["temperature"] = 0.0
+    optimizer_llama_dict["batch_size"] = 1
+    optimizer_llama_dict["num_servers"] = 1
+    optimizer_llama_dict["max_decode_steps"] = 1024
+    llama_model.create_model(temperature=optimizer_llama_dict["temperature"], max_decode_steps=optimizer_llama_dict["max_decode_steps"])
+
+    optimizer_llm_dict = {
+      "model_type": optimizer_llm_name,
+    }
+    optimizer_llm_dict.update(optimizer_llama_dict)
+    call_scorer_server_func = llama_model.call_llama
   else:
     assert optimizer_llm_name in {"gpt-3.5-turbo", "gpt-4"}
     optimizer_gpt_max_decode_steps = 1024
