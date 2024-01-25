@@ -69,9 +69,9 @@ _OPENAI_API_KEY = flags.DEFINE_string(
 
 _PALM_API_KEY = flags.DEFINE_string("palm_api_key", "", "The PaLM API key.")
 
-_LLAMA_CKPT_DIR = flags.DEFINE_string("llama_ckpt_dir", "", "Dir of llama checkpoint")
+_LLAMA_CKPT_DIR = flags.DEFINE_string("llama_ckpt_dir", "", "The directory of llama checkpoint")
 
-_LLAMA_TOKENIZER_PATH = flags.DEFINE_string("llama_tokenizer_path", "", "Path of Llama tokenizer")
+_LLAMA_TOKENIZER_PATH = flags.DEFINE_string("llama_tokenizer_path", "", "The path of Llama tokenizer")
 
 _SCORER = flags.DEFINE_string(
     "scorer", "llama-2-7b-chat", "The name of the scorer LLM."
@@ -283,7 +283,6 @@ def main(_):
     scorer_llm_dict.update(scorer_finetuned_palm_dict)
     call_scorer_server_func = call_scorer_finetuned_palm_server_func
   elif scorer_llm_name == "llama-2-7b-chat":
-    # TODO:
     scorer_llama_dict = dict()
     scorer_llama_dict["max_decode_steps"] = 1024
     scorer_llama_dict['temperature'] = 0.0
