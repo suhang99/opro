@@ -162,7 +162,7 @@ class LlamaModel:
                                          max_seq_len=self.max_seq_len, max_batch_size=self.max_batch_size, model_parallel_size=1)
         else:
             self.model = LlamaForCausalLM.from_pretrained(
-                self.ckpt_dir, torch_dtype=torch.float16, load_in_8bit=False, low_cpu_mem_usage=True).to(self.device)
+                self.ckpt_dir, temperature=kwargs["temperature"], do_sample=True,torch_dtype=torch.float16, load_in_8bit=False, low_cpu_mem_usage=True, device_map="auto")
             self.model = self.model.eval()
             self.tokenizer = LlamaTokenizer.from_pretrained(
                 self.tokenizer_path)
@@ -182,7 +182,7 @@ class LlamaModel:
         if self.model_name == 'llama-2-7b-chat':
             dialogs: List[Dialog] = [[{"role": "user", "content": input_text}]]
             results = self.generator.chat_completion(
-                dialogs, temperature=self.temperature, top_p=0.9)
+                dialogs, temperature=temperature, top_p=0.9)
             assert len(results) == 1
             return results[0]['generation']['content']
         else:

@@ -58,10 +58,10 @@ _OPENAI_API_KEY = flags.DEFINE_string(
 _PALM_API_KEY = flags.DEFINE_string("palm_api_key", "", "The PaLM API key.")
 
 _LLAMA_CKPT_DIR = flags.DEFINE_string(
-    "llama_ckpt_dir", "/home/ubuntu/data/suhang/llama-2-7b-chat-hf", "The directory of llama checkpoint")
+    "llama_ckpt_dir", "/public/home/suhang/Dataset/llama-2-7b-chat-hf", "The directory of llama checkpoint")
 
 _LLAMA_TOKENIZER_PATH = flags.DEFINE_string(
-    "llama_tokenizer_path", "/home/ubuntu/data/suhang/llama-2-7b-chat-hf", "The path of Llama tokenizer")
+    "llama_tokenizer_path", "/public/home/suhang/Dataset/llama-2-7b-chat-hf", "The path of Llama tokenizer")
 
 _OPTIMIZER = flags.DEFINE_string(
     "optimizer", "llama-2-7b-chat-hf", "The name of the optimizer LLM."
@@ -70,10 +70,10 @@ _OPTIMIZER = flags.DEFINE_string(
 
 def main(_):
     # ============== set optimization experiment configurations ================
-    num_points = 50  # number of points in linear regression
+    num_points = 30  # number of points in linear regression
     w_true = 15  # the true w
     b_true = 14  # the true b
-    max_num_steps = 500  # the number of optimization steps
+    max_num_steps = 100  # the number of optimization steps
     num_reps = 5  # the number of repeated runs
     max_num_pairs = 20  # the maximum number of input-output pairs in meta-prompt
     num_input_decimals = 0  # num of decimals for input values in meta-prompt
@@ -157,7 +157,7 @@ def main(_):
         optimizer_llm_dict.update(optimizer_finetuned_palm_dict)
         call_optimizer_server_func = call_optimizer_finetuned_palm_server_func
     elif optimizer_llm_name.lower() in {"llama-2-7b-chat", "llama-2-7b-chat-hf"}:
-        optimizer_llama_temperature = 0.1
+        optimizer_llama_temperature = 1.0
         optimizer_llama_max_length = 1024
         optimizer_llama_dict = dict()
         optimizer_llama_dict["temperature"] = optimizer_llama_temperature
